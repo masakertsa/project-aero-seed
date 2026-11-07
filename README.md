@@ -32,7 +32,7 @@ graph TD
     style E fill:#D5F5E3,stroke:#333,stroke-width:2px
     style G fill:#1ABC9C,stroke:#333,stroke-width:2px
     style H fill:#E67E22,stroke:#333,stroke-width:2px
-```
+```mermaid
 
 ## 🔄 Passive Deep Space Operation & Lifecycle
 
