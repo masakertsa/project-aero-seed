@@ -6,6 +6,7 @@ albedo-driven thermal shifts, and biological proliferation of the Martian terraf
 
 import math
 
+
 def calculate_ice_ablation_rate(entry_velocity, atmospheric_density):
     """
     Calculates the thickness of the cryogenic ice shell consumed during atmospheric entry.
@@ -13,7 +14,7 @@ def calculate_ice_ablation_rate(entry_velocity, atmospheric_density):
     
     Parameters:
     - entry_velocity (float): Entry speed in meters per second.
-    - atmospheric_density (float): Density profile of the Martian atmosphere.
+    - atmospheric_density (float): Density profile of the Martian atmosphere in kg/m^3.
     
     Returns:
     - float: Required ice shield thickness in meters.
@@ -21,7 +22,7 @@ def calculate_ice_ablation_rate(entry_velocity, atmospheric_density):
     if entry_velocity <= 0 or atmospheric_density <= 0:
         return 0.0
         
-    # Optimized aerodynamic heat transfer coefficient (Stanton number / Chulon) for a streamlined teardrop shape
+    # Optimized aerodynamic heat transfer coefficient (Stanton number C_H) for a streamlined teardrop shape
     heat_transfer_coefficient = 0.003
     
     # Latent heat of sublimation for ice (J/kg) – energy required to turn ice directly into gas
@@ -45,17 +46,20 @@ def calculate_ice_ablation_rate(entry_velocity, atmospheric_density):
 
 def model_albedo_thermal_gain(mat_surface_area_km2, base_albedo=0.25, algae_albedo=0.08):
     """
-    Models the local temperature increase caused by the expansion of dark algae mats.
-    Calculates the net thermal energy gain using the solar constant at Mars.
+    Models the local thermal energy gain caused by the expansion of dark algae mats.
+    Calculates both surface flux (W/m^2) and total captured thermal power (MW) over the mat area.
     
     Parameters:
-    - mat_surface_area_km2 (float): Surface area covered by the expanding biological mat.
+    - mat_surface_area_km2 (float): Surface area covered by the expanding biological mat in km^2.
     - base_albedo (float): Native Martian regolith albedo (~0.25).
     - algae_albedo (float): Dense cyanobacteria mat albedo (~0.08).
     
     Returns:
-    - float: Net thermal energy gain in Watts/meter^2.
+    - tuple: (Net thermal energy gain in W/m^2, Total regional thermal power gain in MW)
     """
+    if mat_surface_area_km2 <= 0:
+        return (0.0, 0.0)
+
     # Average solar constant (Solar Irradiance) at the Martian orbital distance (W/m^2)
     mars_solar_constant = 590.0 
     
@@ -65,7 +69,10 @@ def model_albedo_thermal_gain(mat_surface_area_km2, base_albedo=0.25, algae_albe
     # Net thermal energy gain per square meter (W/m^2)
     net_thermal_gain_per_m2 = mars_solar_constant * albedo_delta
     
-    return round(net_thermal_gain_per_m2, 2)
+    # Total thermal power captured across the entire mat area (1 km^2 = 1,000,000 m^2)
+    total_power_mw = (net_thermal_gain_per_m2 * (mat_surface_area_km2 * 1_000_000)) / 1_000_000
+    
+    return (round(net_thermal_gain_per_m2, 2), round(total_power_mw, 2))
 
 
 def simulate_biological_growth(initial_biomass_npk, water_volume_liters):
@@ -110,10 +117,10 @@ if __name__ == "__main__":
     thickness = calculate_ice_ablation_rate(5500, 0.0055)
     print(f"1. Required Ice Shield Thickness: {thickness} meters ({thickness * 100:.1f} cm)")
     
-    # Net radiation capture increase when surface albedo drops from 0.25 to 0.08
-    thermal_gain = model_albedo_thermal_gain(1.0)
-    print(f"2. Net Thermal Energy Gain: {thermal_gain} W/m^2")
+    # Net radiation capture increase when surface albedo drops from 0.25 to 0.08 over a 1.0 km^2 zone
+    thermal_flux, total_mw = model_albedo_thermal_gain(1.0)
+    print(f"2. Net Thermal Energy Gain: {thermal_flux} W/m^2 ({total_mw} MW across 1.0 km^2)")
     
-    # Growth simulation using 10g NPK baseline substrate and 6L reservoir (matching one-drop-oasis parameters)
+    # Growth simulation using 10g NPK baseline substrate and 6L reservoir (standard capsule payload parameters)
     biomass = simulate_biological_growth(10.0, 6.0)
     print(f"3. Simulated Final Cyanobacteria Biomass: {biomass} grams")
